@@ -1,0 +1,16 @@
+
+# Map bundle menu items definition
+entity.map_bundle.collection:
+  title: 'Map bundle'
+  route_name: entity.map_bundle.collection
+  description: 'List Map bundle (bundles)'
+  parent: system.admin_structure
+  weight: 99
+
+# Map layer menu items definition
+entity.map_layer.collection:
+  title: 'Map layer'
+  route_name: entity.map_layer.collection
+  description: 'List Map layer (bundles)'
+  parent: system.admin_structure
+  weight: 99

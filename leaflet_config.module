@@ -1,0 +1,104 @@
+<?php
+
+/**
+ * @file
+ * Contains leaflet_config.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\leaflet_config\Entity\MapBundle;
+use Drupal\leaflet_config\Entity\MapLayer;
+
+/**
+ * Implements hook_help().
+ */
+function leaflet_config_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the leaflet_config module.
+    case 'help.page.leaflet_config':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Provide configurable config for Leaflet') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+
+/**
+ * Implements hook_leaflet_map_info().
+ *
+ * @NOTE Make sure we don't get any recursion. Adding a created layer into a layer.
+ */
+function leaflet_config_leaflet_map_info() {
+  $bundles = MapBundle::loadMultiple();
+  $hook_data = [];
+  foreach ($bundles as $bundle) {
+    $item = [
+      'label' => $bundle->label(),
+      'description' => '',
+      'settings' => $bundle->getSettings(),
+      'layers' => [],
+    ];
+
+    $layers = $bundle->getLayers();
+
+    foreach ($layers as $layer) {
+      $structure = $layer['structure'];
+      if ($layer['structure']['module'] !== 'leaflet_config') {
+        // Load the correct layer from that module.
+        $layer_data = \Drupal::moduleHandler()->invoke($structure['module'], 'leaflet_map_info');
+        $item['layers'][$structure['map_bundle'] . ' ' . $structure['layer']] = $layer_data[$structure['map_bundle']]['layers'][$structure['layer']];
+      }
+      else {
+        // TODO Implement loading of custom layers.
+        $layerEntity = MapLayer::load($structure['layer']);
+        $layerItem = [
+          'urlTemplate' => $layerEntity->getUrlTemplate(),
+          'options' => [],
+        ];
+
+        if ($layerEntity->getSetting('attribution') !== '') {
+          $layerItem['options']['attribution'] = $layerEntity->getSetting('attribution');
+        }
+        if ($layerEntity->getSetting('minZoom', 0) != 0) {
+          $layerItem['options']['minZoom'] = $layerEntity->getSetting('minZoom');
+        }
+        if ($layerEntity->getSetting('maxZoom', 0) != 0) {
+          $layerItem['options']['maxZoom'] = $layerEntity->getSetting('maxZoom');
+        }
+        if ($layerEntity->getSetting('subdomains') !== '') {
+          $layerItem['options']['subdomains'] = explode(',', $layerEntity->getSetting('subdomains'));
+        }
+        if ($layerEntity->getSetting('errorTileUrl') !== '') {
+          $layerItem['options']['errorTileUrl'] = $layerEntity->getSetting('errorTileUrl');
+        }
+        if ($layerEntity->getSetting('zoomOffset', 0) != 0) {
+          $layerItem['options']['zoomOffset'] = $layerEntity->getSetting('zoomOffset');
+        }
+        if ($layerEntity->getSetting('tms', FALSE) != FALSE) {
+          $layerItem['options']['tms'] = $layerEntity->getSetting('tms');
+        }
+        if ($layerEntity->getSetting('zoomReverse', FALSE) != FALSE) {
+          $layerItem['options']['zoomReverse'] = $layerEntity->getSetting('zoomReverse');
+        }
+        if ($layerEntity->getSetting('detectRetina', FALSE) != FALSE) {
+          $layerItem['options']['detectRetina'] = $layerEntity->getSetting('detectRetina');
+        }
+
+        $item['layers'][$structure['layer']] = $layerItem;
+      }
+    }
+
+    uasort($item['layers'], function($a, $b) {
+      $aVal = isset($a['layer_type']) ? $a['layer_type'] : 'base';
+      $bVal = isset($b['layer_type']) ? $b['layer_type'] : 'base';
+
+      return strcmp($aVal, $bVal);
+    });
+
+    $hook_data[$bundle->id()] = $item;
+  }
+  return $hook_data;
+}

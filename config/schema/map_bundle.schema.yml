@@ -1,0 +1,36 @@
+leaflet_config.map_bundle.*:
+  type: config_entity
+  label: 'Map bundle config'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    uuid:
+      type: string
+    layers:
+      type: mapping
+      label: 'Layers'
+      mapping:
+        id:
+          type: string
+          label: 'ID'
+        label:
+          type: string
+          label: 'Label'
+        module:
+          type: string
+          label: 'Module'
+        data:
+          type: string,
+          label: 'Data'
+        structure:
+          type: sequence
+          label: 'Structure'
+    settings:
+      type: sequence
+      label: 'Settings'
+      sequence:
+        type: '[%parent.%parent.%type].settings.[%key]'
