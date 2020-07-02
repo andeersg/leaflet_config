@@ -1,5 +1,7 @@
-name: 'Leaflet COnfig'
+name: 'Leaflet Config'
 type: module
 description: 'Provide configurable config for Leaflet'
 core: 8.x
 package: 'Custom'
+dependencies:
+  - leaflet:leaflet
